@@ -16,11 +16,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
+        viewModel.viewState().observe(this, Observer {value ->
+            Toast.makeText(this, value, Toast.LENGTH_SHORT).show()
+            textView.text = value
+        })
         button.setOnClickListener{
-            viewModel.updateData(editText.text.toString()).observe(this, Observer { value ->
-                Toast.makeText(this, value, Toast.LENGTH_SHORT).show()
-                textView.text = value
-            })
+            viewModel.updateData(editText.text.toString())
         }
     }
 

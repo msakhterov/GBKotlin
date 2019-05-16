@@ -9,9 +9,10 @@ class MainViewModel : ViewModel() {
     private val repo: Data = Data()
     private val viewStateLiveData: MutableLiveData<String> = MutableLiveData()
 
-    fun updateData(newData: String): LiveData<String> {
+    fun viewState(): LiveData<String> = viewStateLiveData
+
+    fun updateData(newData: String){
         repo.text = newData
         viewStateLiveData.value = repo.text
-        return viewStateLiveData
     }
 }
