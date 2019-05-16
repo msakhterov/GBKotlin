@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">gb_kotlin_1</string>
+    <string name="enter_your_text">Enter your text</string>
+    <string name="button">Button</string>
+</resources>
