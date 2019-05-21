@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">NotesApp</string>
+    <string name="item_title_hint">Очень важная запись</string>
+    <string name="item_text_hint">Текст очень важной записи</string>
+</resources>
