@@ -2,4 +2,7 @@
     <string name="app_name">NotesApp</string>
     <string name="item_title_hint">Очень важная запись</string>
     <string name="item_text_hint">Текст очень важной записи</string>
+    <string name="note_title_hint">Заголовок</string>
+    <string name="note_text_hint">Текст</string>
+    <string name="note_new_note">Новая заметка</string>
 </resources>
