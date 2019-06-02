@@ -5,55 +5,82 @@ import android.arch.lifecycle.MutableLiveData
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import ru.msakhterov.notesapp.data.entity.Note
-import ru.msakhterov.notesapp.data.model.NoteResult
+import ru.msakhterov.notesapp.model.NoteResult
 import com.github.ajalt.timberkt.Timber
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.firebase.auth.FirebaseAuth
+import ru.msakhterov.notesapp.data.entity.User
+import ru.msakhterov.notesapp.data.error.NoAuthException
 
 class FireStoreProvider : RemoteDataProvider {
 
     companion object {
+        private const val USERS_COLLECTION = "users"
         private const val NOTES_COLLECTION = "notes"
     }
 
-    private val store = FirebaseFirestore.getInstance()
-    private val notesReference = store.collection(NOTES_COLLECTION)
+    private val store by lazy { FirebaseFirestore.getInstance() }
 
-    override fun subscribeToAllNotes(): LiveData<NoteResult> {
-        val result = MutableLiveData<NoteResult>()
-        notesReference.addSnapshotListener { snapshot, e ->
-            if (e != null) {
-                result.value = NoteResult.Error(e)
-            } else if (snapshot != null) {
-                val notes = mutableListOf<Note>()
-                for (doc: QueryDocumentSnapshot in snapshot) {
-                    notes.add(doc.toObject(Note::class.java))
+    private val currentUser
+        get() = FirebaseAuth.getInstance().currentUser
+
+    override fun getCurrentUser(): LiveData<User?> = MutableLiveData<User?>().apply {
+        value = currentUser?.let {
+            User(it.displayName ?: "", it.email ?: "")
+        }
+    }
+
+    private fun getUserNotesCollection() = currentUser?.let {
+        store.collection(USERS_COLLECTION).document(it.uid).collection(NOTES_COLLECTION)
+    } ?: throw NoAuthException()
+
+    override fun subscribeToAllNotes() = MutableLiveData<NoteResult>().apply {
+        try {
+            getUserNotesCollection().addSnapshotListener { snapshot, e ->
+                value = e?.let {
+                    throw it
+                } ?: snapshot?.let {
+                    val notes = it.documents.map { it.toObject(Note::class.java) }
+                    NoteResult.Success(notes)
                 }
-                result.value = NoteResult.Success(notes)
             }
+        } catch (e: Throwable) {
+            value = NoteResult.Error(e)
         }
-        return result
     }
 
-    override fun getNoteById(id: String): LiveData<NoteResult> {
-        val result = MutableLiveData<NoteResult>()
-        notesReference.document(id).get().addOnSuccessListener { snapshot ->
-            result.value = NoteResult.Success(snapshot.toObject(Note::class.java))
-        }.addOnFailureListener { e ->
-            result.value = NoteResult.Error(e)
+    override fun getNoteById(id: String) = MutableLiveData<NoteResult>().apply {
+        try {
+            getUserNotesCollection()
+                .document(id)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    value = NoteResult.Success(snapshot.toObject(Note::class.java))
+                }.addOnFailureListener {
+                    Timber.d { "Error getting note by id $id, message: ${it.message}" }
+                    throw it
+                }
+
+        } catch (e: Throwable) {
+            value = NoteResult.Error(e)
         }
-        return result
     }
 
-    override fun saveNote(note: Note): LiveData<NoteResult> {
-        val result = MutableLiveData<NoteResult>()
-        notesReference.document(note.id)
-            .set(note).addOnSuccessListener {
-                Timber.d { "Note $note is saved" }
-                result.value = NoteResult.Success(note)
-            }.addOnFailureListener {
-                Timber.d {"Error saving note $note, message: ${it.message}"}
-                result.value = NoteResult.Error(it)
-            }
-        return result
+    override fun saveNote(note: Note) = MutableLiveData<NoteResult>().apply {
+        try {
+            getUserNotesCollection()
+                .document(note.id)
+                .set(note)
+                .addOnSuccessListener {
+                    Timber.d { "Note $note is saved" }
+                    value = NoteResult.Success(note)
+                }.addOnFailureListener {
+                    Timber.d { "Error saving note $note, message: ${it.message}" }
+                    throw it
+                }
+        } catch (e: Throwable) {
+            value = NoteResult.Error(e)
+        }
     }
 
 }

@@ -11,6 +11,8 @@ import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_main.toolbar
 import kotlinx.android.synthetic.main.activity_note.*
 import ru.msakhterov.notesapp.R
+import ru.msakhterov.notesapp.common.format
+import ru.msakhterov.notesapp.common.getColorInt
 import ru.msakhterov.notesapp.data.entity.Note
 import ru.msakhterov.notesapp.ui.base.BaseActivity
 import java.text.SimpleDateFormat
@@ -19,7 +21,6 @@ import java.util.*
 class NoteActivity : BaseActivity<Note?, NoteViewState>() {
 
     companion object {
-
         private val EXTRA_NOTE = NoteActivity::class.java.name + "extra.NOTE"
         private const val DATE_TIME_FORMAT = "dd.MM.yy HH:mm"
 
@@ -37,7 +38,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         ViewModelProviders.of( this).get(NoteViewModel::class.java)
     }
 
-    val textWatcher = object : TextWatcher {
+    private val textWatcher = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
         override fun afterTextChanged(s: Editable?) {
@@ -52,7 +53,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         val noteId = intent.getStringExtra(EXTRA_NOTE)
         noteId?.let {
             viewModel.loadNote(it)
-        } ?: let {
+        } ?:let {
             supportActionBar?.title = getString(R.string.note_new_note)
         }
     }
@@ -60,7 +61,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
     override fun renderData(data: Note?) {
         this.note = data
         supportActionBar?.title = if(this.note != null) {
-            SimpleDateFormat(DATE_TIME_FORMAT, Locale.getDefault()).format(note!!.lastChanged)
+            note!!.lastChanged.format(DATE_TIME_FORMAT)
         } else {
             getString(R.string.note_new_note)
         }
@@ -71,16 +72,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         note?.let { note ->
             et_title.setText(note.title)
             et_text.setText(note.text)
-            val color = when (note.color) {
-                Note.Color.WHITE -> R.color.white
-                Note.Color.YELLOW -> R.color.yellow
-                Note.Color.GREEN -> R.color.green
-                Note.Color.BLUE -> R.color.blue
-                Note.Color.RED -> R.color.red
-                Note.Color.VIOLET -> R.color.violet
-                Note.Color.PINK -> R.color.pink
-            }
-            toolbar.setBackgroundColor(ResourcesCompat.getColor(resources, color, null))
+            toolbar.setBackgroundColor(note.color.getColorInt(this))
         }
         et_title.addTextChangedListener(textWatcher)
         et_text.addTextChangedListener(textWatcher)

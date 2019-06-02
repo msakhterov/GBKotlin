@@ -2,10 +2,9 @@ package ru.msakhterov.notesapp.ui.note
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModel
 import ru.msakhterov.notesapp.data.NotesRepository
 import ru.msakhterov.notesapp.data.entity.Note
-import ru.msakhterov.notesapp.data.model.NoteResult
+import ru.msakhterov.notesapp.model.NoteResult
 import ru.msakhterov.notesapp.ui.base.BaseViewModel
 
 class NoteViewModel : BaseViewModel<Note?, NoteViewState>() {
