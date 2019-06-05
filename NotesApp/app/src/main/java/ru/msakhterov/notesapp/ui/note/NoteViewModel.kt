@@ -7,7 +7,7 @@ import ru.msakhterov.notesapp.data.entity.Note
 import ru.msakhterov.notesapp.model.NoteResult
 import ru.msakhterov.notesapp.ui.base.BaseViewModel
 
-class NoteViewModel : BaseViewModel<Note?, NoteViewState>() {
+class NoteViewModel(private val notesRepository: NotesRepository) : BaseViewModel<NoteViewState.Data, NoteViewState>() {
 
     init {
         viewStateLiveData.value = NoteViewState()
@@ -18,7 +18,7 @@ class NoteViewModel : BaseViewModel<Note?, NoteViewState>() {
             if (t == null) return
             when (t) {
                 is NoteResult.Success<*> -> {
-                    viewStateLiveData.value = NoteViewState(note = t.data as? Note)
+                    viewStateLiveData.value = NoteViewState(NoteViewState.Data(note = t.data as? Note))
                 }
                 is NoteResult.Error -> {
                     viewStateLiveData.value = NoteViewState(error = t.error)
@@ -27,22 +27,36 @@ class NoteViewModel : BaseViewModel<Note?, NoteViewState>() {
         }
     }
     private var repositoryNote: LiveData<NoteResult>? = null
-    private var pendingNote: Note? = null
+    private val pendingNote: Note?
+        get() = viewStateLiveData.value?.data?.note
 
     fun save(note: Note) {
-        pendingNote = note
+        viewStateLiveData.value = NoteViewState(NoteViewState.Data(note = note))
     }
 
     fun loadNote(noteId: String) {
-        repositoryNote = NotesRepository.getNoteById(noteId)
-        repositoryNote!!.observeForever(noteObserver)
+        repositoryNote = notesRepository.getNoteById(noteId)
+        repositoryNote?.observeForever(noteObserver)
+    }
+
+    fun deleteNote() {
+        pendingNote?.let {
+            notesRepository.deleteNote(it.id).observeForever { result ->
+                result?.let {
+                    viewStateLiveData.value = when (result) {
+                        is NoteResult.Success<*> -> NoteViewState(NoteViewState.Data(isDeleted = true))
+                        is NoteResult.Error -> NoteViewState(error = result.error)
+                    }
+                }
+            }
+        }
     }
 
     override fun onCleared() {
         pendingNote?.let { note ->
-            NotesRepository.saveNote(note)
+            notesRepository.saveNote(note)
         }
-        repositoryNote?.let { it.removeObserver(noteObserver) }
+        repositoryNote?.removeObserver(noteObserver)
     }
 
 }

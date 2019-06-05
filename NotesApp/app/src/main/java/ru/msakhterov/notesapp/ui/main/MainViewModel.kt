@@ -6,7 +6,7 @@ import ru.msakhterov.notesapp.data.entity.Note
 import ru.msakhterov.notesapp.model.NoteResult
 import ru.msakhterov.notesapp.ui.base.BaseViewModel
 
-class MainViewModel: BaseViewModel<List<Note>?, MainViewState>() {
+class MainViewModel(notesRepository: NotesRepository): BaseViewModel<List<Note>?, MainViewState>() {
 
     private val notesObserver = object : Observer<NoteResult> {
         override fun onChanged(t: NoteResult?) {
@@ -22,7 +22,7 @@ class MainViewModel: BaseViewModel<List<Note>?, MainViewState>() {
         }
     }
 
-    private val repositoryNotes = NotesRepository.getNotes()
+    private val repositoryNotes = notesRepository.getNotes()
 
     init {
         viewStateLiveData.value = MainViewState()

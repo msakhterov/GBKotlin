@@ -1,7 +1,7 @@
 package ru.msakhterov.notesapp.ui.splash
 
-import android.arch.lifecycle.ViewModelProviders
 import android.os.Handler
+import org.koin.android.viewmodel.ext.android.viewModel
 import ru.msakhterov.notesapp.ui.base.BaseActivity
 import ru.msakhterov.notesapp.ui.main.MainActivity
 
@@ -11,9 +11,7 @@ class SplashActivity : BaseActivity<Boolean?, SplashViewState>() {
         private const val START_DELAY = 500L
     }
 
-    override val viewModel: SplashViewModel by lazy {
-        ViewModelProviders.of(this).get(SplashViewModel::class.java)
-    }
+    override val viewModel: SplashViewModel by viewModel()
     override val layoutRes: Int? = null
 
     override fun onResume() {

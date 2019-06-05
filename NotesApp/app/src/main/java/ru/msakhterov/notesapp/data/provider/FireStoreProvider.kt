@@ -2,27 +2,23 @@ package ru.msakhterov.notesapp.data.provider
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QueryDocumentSnapshot
-import ru.msakhterov.notesapp.data.entity.Note
-import ru.msakhterov.notesapp.model.NoteResult
 import com.github.ajalt.timberkt.Timber
-import com.google.android.gms.tasks.OnFailureListener
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import ru.msakhterov.notesapp.data.entity.Note
 import ru.msakhterov.notesapp.data.entity.User
 import ru.msakhterov.notesapp.data.error.NoAuthException
+import ru.msakhterov.notesapp.model.NoteResult
 
-class FireStoreProvider : RemoteDataProvider {
+class FireStoreProvider(private val firebaseAuth: FirebaseAuth, private val store: FirebaseFirestore) : RemoteDataProvider {
 
     companion object {
         private const val USERS_COLLECTION = "users"
         private const val NOTES_COLLECTION = "notes"
     }
 
-    private val store by lazy { FirebaseFirestore.getInstance() }
-
     private val currentUser
-        get() = FirebaseAuth.getInstance().currentUser
+        get() = firebaseAuth.currentUser
 
     override fun getCurrentUser(): LiveData<User?> = MutableLiveData<User?>().apply {
         value = currentUser?.let {
@@ -81,6 +77,15 @@ class FireStoreProvider : RemoteDataProvider {
         } catch (e: Throwable) {
             value = NoteResult.Error(e)
         }
+    }
+
+    override fun deleteNote(id: String): LiveData<NoteResult> = MutableLiveData<NoteResult>().apply {
+        getUserNotesCollection().document(id).delete()
+            .addOnSuccessListener {
+                value = NoteResult.Success(null)
+            }.addOnFailureListener {
+                value = NoteResult.Error(it)
+            }
     }
 
 }
