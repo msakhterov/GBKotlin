@@ -2,6 +2,7 @@ package ru.msakhterov.notesapp.ui.note
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Observer
+import android.support.annotation.VisibleForTesting
 import ru.msakhterov.notesapp.data.NotesRepository
 import ru.msakhterov.notesapp.data.entity.Note
 import ru.msakhterov.notesapp.model.NoteResult
@@ -52,7 +53,8 @@ class NoteViewModel(private val notesRepository: NotesRepository) : BaseViewMode
         }
     }
 
-    override fun onCleared() {
+    @VisibleForTesting
+    public override fun onCleared() {
         pendingNote?.let { note ->
             notesRepository.saveNote(note)
         }
