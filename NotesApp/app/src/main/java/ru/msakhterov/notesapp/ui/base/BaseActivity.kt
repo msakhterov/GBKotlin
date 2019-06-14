@@ -8,17 +8,25 @@ import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import com.firebase.ui.auth.AuthUI
 import com.github.ajalt.timberkt.Timber
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.consumeEach
 import ru.msakhterov.notesapp.R
 import ru.msakhterov.notesapp.data.error.NoAuthException
+import kotlin.coroutines.CoroutineContext
 
 
-abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
+@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi
+abstract class BaseActivity<T> : AppCompatActivity(), CoroutineScope {
 
     companion object {
         private const val SIGN_IN_REQUEST = 1
     }
 
-    abstract val viewModel: BaseViewModel<T, S>
+    override val coroutineContext: CoroutineContext by lazy { Dispatchers.Main + Job() }
+    private lateinit var dataJob: Job
+    private lateinit var errorJob: Job
+    abstract val viewModel: BaseViewModel<T>
     abstract val layoutRes: Int?
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,16 +34,32 @@ abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
         layoutRes?.let {
             setContentView(it)
         }
-        viewModel.getViewState().observe(this, object : Observer<S> {
-            override fun onChanged(t: S?) {
-                if (t == null) return
-                if (t.error != null) {
-                    renderError(t.error)
-                    return
-                }
-                renderData(t.data)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dataJob = launch {
+            viewModel.getViewState().consumeEach {
+                renderData(it)
             }
-        })
+        }
+
+        errorJob = launch {
+            viewModel.getErrorChannel().consumeEach {
+                renderError(it)
+            }
+        }
+    }
+
+    override fun onStop() {
+        dataJob.cancel()
+        errorJob.cancel()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        coroutineContext.cancel()
+        super.onDestroy()
     }
 
     protected fun renderError(error: Throwable?) {

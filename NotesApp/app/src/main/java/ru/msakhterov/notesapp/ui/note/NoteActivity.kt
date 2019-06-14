@@ -7,8 +7,9 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
-import kotlinx.android.synthetic.main.activity_main.toolbar
 import kotlinx.android.synthetic.main.activity_note.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.jetbrains.anko.alert
 import org.koin.android.viewmodel.ext.android.viewModel
 import ru.msakhterov.notesapp.R
@@ -18,7 +19,9 @@ import ru.msakhterov.notesapp.data.entity.Note
 import ru.msakhterov.notesapp.ui.base.BaseActivity
 import java.util.*
 
-class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
+@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi
+class NoteActivity : BaseActivity<NoteData>() {
 
     companion object {
         private val EXTRA_NOTE = NoteActivity::class.java.name + "extra.NOTE"
@@ -32,10 +35,12 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
         }
     }
 
+    override val viewModel: NoteViewModel by viewModel()
+    override val layoutRes: Int = R.layout.activity_note
     private var color: Note.Color = Note.Color.WHITE
     private var note: Note? = null
-    override val layoutRes: Int = R.layout.activity_note
-    override val viewModel: NoteViewModel by viewModel()
+
+
 
     private val textWatcher = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
@@ -57,7 +62,7 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
         }
     }
 
-    override fun renderData(data: NoteViewState.Data) {
+    override fun renderData(data: NoteData) {
         if (data.isDeleted) {
             finish()
             return

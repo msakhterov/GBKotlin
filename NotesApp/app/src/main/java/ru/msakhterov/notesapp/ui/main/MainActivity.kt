@@ -3,12 +3,15 @@ package ru.msakhterov.notesapp.ui.main
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.support.v4.content.ContextCompat.startActivity
 import android.support.v7.widget.GridLayoutManager
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import com.firebase.ui.auth.AuthUI
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.jetbrains.anko.alert
 import org.koin.android.viewmodel.ext.android.viewModel
 import ru.msakhterov.notesapp.R
@@ -17,7 +20,9 @@ import ru.msakhterov.notesapp.ui.base.BaseActivity
 import ru.msakhterov.notesapp.ui.note.NoteActivity
 import ru.msakhterov.notesapp.ui.splash.SplashActivity
 
-class MainActivity : BaseActivity<List<Note>?, MainViewState>() {
+@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi
+class MainActivity : BaseActivity<List<Note>?>() {
 
     companion object {
         fun start(context: Context) = Intent(context, MainActivity::class.java).run {
